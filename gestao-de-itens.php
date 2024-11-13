@@ -18,4 +18,3 @@ echo "<table border='1' cellspacing='0' cellpadding='8' style='width:100%; borde
         <!-- Linhas de dados vão ser adicionadas aqui futuramente -->
     </tbody>
 </table>";
-?>
