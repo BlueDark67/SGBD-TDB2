@@ -30,4 +30,3 @@ FROM
 JOIN 
     item_type ON item.item_type_id = item_type.id; "
 
-?>
