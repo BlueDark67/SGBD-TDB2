@@ -14,18 +14,22 @@
     <?php
     require_once 'common.php';
     $conn = connectDB();
-    $sql = "SELECT i.name AS item, i.id AS item_id, si.name AS subitem, si.id AS subitem_id, sav.value AS valores_permitidos, i.state AS estado, '[editar] [desativar] [apagar]' AS acao FROM item i JOIN subitem si ON i.id = si.item_id JOIN subitem_allowed_value sav ON si.id = sav.subitem_id WHERE i.state = 'active' AND si.state = 'active' AND sav.state = 'active'";
+    $sql = "SELECT i.name AS item, si.id AS subitem_id, si.name AS subitem, sav.id AS subitem_allowed_value_id, sav.value AS valores_permitidos, sav.state AS estado 
+        FROM item i 
+            LEFT JOIN subitem si ON i.id = si.item_id 
+            LEFT JOIN subitem_allowed_value sav ON si.id = sav.subitem_id  
+        ORDER BY subitem_id, subitem_allowed_value_id ASC;";
     $rs = mysqli_query($conn, $sql);
     if (mysqli_num_rows($rs) > 0) {
         while($row = mysqli_fetch_array($rs)){
             echo "<tr>
              <td>" . $row['item'] . "</td>
-             <td>" . $row['item_id'] . "</td>
-             <td>" . $row['subitem'] . "</td>
              <td>" . $row['subitem_id'] . "</td>
+             <td>" . $row['subitem'] . "</td>
+             <td>" . $row['subitem_allowed_value_id'] . "</td>
              <td>" . $row['valores_permitidos'] . "</td>
              <td>" . $row['estado'] . "</td>
-             <td><a href='editar-valores-permitidos.php?id=" . $row['item_id'] . "'>Editar</a></td>
+             <td><a href='http://localhost/sgbd/edicao-de-dados/" . $row["subitem_id"] . "'>Editar</a> <br> <a href='http://localhost/sgbd/edicao-de-dados/" . $row["subitem_id"]. "'>Desativar</a> <br> <a href='http://localhost/sgbd/edicao-de-dados/" . $row["subitem_id"]. "'>Apagar</a></td>
              </tr>";
         }
     }else{
