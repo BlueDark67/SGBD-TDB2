@@ -1,5 +1,6 @@
 <?php
 require_once 'common.php';
+global $current_page;
 // Conectar à base de dados
 $conn = connectDB();
 // Selecionar dados
@@ -62,6 +63,7 @@ if (mysqli_num_rows($result) > 0) {
         </tr>";
     }
     echo "</table>";
+    echo $current_page;
 } else {
     echo "0 resultados";
 }
