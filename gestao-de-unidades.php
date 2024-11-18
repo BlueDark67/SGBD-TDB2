@@ -6,21 +6,23 @@ global $edit_page;
 // Conectar à base de dados
 $conn = connectDB();
 
-// Adicionar dados
+// Verificar se o formulário foi enviado
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $name = mysqli_real_escape_string($conn, $_POST['name']); // Proteção contra SQL Injection
-    if (!empty($name)) { // Verifica se o campo 'name' não está vazio antes de inserir
-        $sql = "INSERT INTO subitem_unit_type (name) VALUE ('$name')";
-        if (!mysqli_query($conn, $sql)) {
-            echo "Erro: " . $sql . "<br>" . mysqli_error($conn);
+    // Obter o valor do campo 'name' enviado pelo formulário
+    $name = mysqli_real_escape_string($conn, $_POST['name']); // Escapar valores para prevenir SQL Injection
+
+    // Verificar se o campo 'name' não está vazio
+    if (!empty($name)) {
+        // Inserir o novo valor na tabela 'subitem_unit_type'
+        $insert_query = "INSERT INTO subitem_unit_type (name) VALUES ('$name')";
+
+        if (mysqli_query($conn, $insert_query)) {
+            echo "<p style='color: green;'>Registro inserido com sucesso!</p>";
         } else {
-            // Utiliza JavaScript para recarregar a página após inserção
-            echo "<script type='text/javascript'>
-                    window.location.href = window.location.href;
-                  </script>";
+            echo "<p style='color: red;'>Erro ao inserir registro: " . mysqli_error($conn) . "</p>";
         }
     } else {
-        echo "<script>alert('Por favor, insira um nome!');</script>"; // Exibe um alerta se o campo estiver vazio
+        echo "<p style='color: red;'>O campo 'Nome' não pode estar vazio.</p>";
     }
 }
 
@@ -90,7 +92,7 @@ if (mysqli_num_rows($result) > 0) {
 
 echo <<<HTML
     <h3>Gestão de Unidaddes - introdução</h3>
-    <form action="" method="post">
+    <form method="post">
         <div>
             <label for="name">Nome:</label><br>
             <input type="text" id="name" name="name" placeholder="Escreva aqui"><br>
@@ -98,6 +100,7 @@ echo <<<HTML
         <br>
         <div>
             <button type="submit">Submeter</button>
+            
         </div>
         
     </form>

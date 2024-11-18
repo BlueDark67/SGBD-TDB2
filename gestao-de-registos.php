@@ -5,19 +5,6 @@ global $edit_page;
 // Conectar à base de dados
 $conn = connectDB();
 // Selecionar dados
-/*$sql = "SELECT
-           child.name,
-           child.birth_date,
-           child.tutor_name,
-           child.tutor_phone,
-           child.tutor_email,
-           (CONCAT(item.name, ': ',GROUP_CONCAT(subitem.name SEPARATOR ', ' ))) as registo
-       FROM child
-       LEFT JOIN value ON child.id = value.child_id
-       LEFT JOIN subitem ON value.subitem_id = subitem.id
-       LEFT JOIN item ON subitem.item_id = item.id
-       GROUP BY child.name, child.birth_date, child.tutor_name, child.tutor_phone, child.tutor_email
-       ORDER BY child.name ASC";*/
 
 $query = "SELECT child.id ,child.name, child.birth_date, child.tutor_name,child.tutor_phone,child.tutor_email FROM child ORDER BY child.name ASC";
 $result = mysqli_query($conn, $query);
@@ -45,8 +32,8 @@ if (mysqli_num_rows($result) > 0) {
     <th>Tutor</th>
     <th>Telefone</th>
     <th>Email</th>
-    <th>Ação</th> 
-    <th>Registos</th> 
+    <th>Ação</th>
+    <th>Registos</th>
 </tr>";
 
     while ($row = mysqli_fetch_assoc($result)) {
@@ -63,34 +50,34 @@ if (mysqli_num_rows($result) > 0) {
                    JOIN value ON value.subitem_id = subitem.id
                    JOIN item ON item.id = subitem.item_id
                    WHERE value.child_id = " . $row["id"] . "
-                   ORDER BY item_name ASC";
+                   ORDER BY item_name, value.date ASC";
         $result2 = mysqli_query($conn, $query2);
 
         $subitems_by_registo = [];
-        $last_date = ''; // Variável para armazenar a última data
-        $last_producer = ''; // Variável para armazenar o último produtor
+        $data = [];
+        $produtor = [];
 
         // Itera pelos subitens e valores relacionados
         while ($row2 = mysqli_fetch_assoc($result2)) {
-            // A data e o produtor são exibidos uma vez por grupo (item_name)
-            if ($last_date != $row2['date'] || $last_producer != $row2['producer']) {
-                // Atualiza a data e o produtor
-                $last_date = $row2['date'];
-                $last_producer = $row2['producer'];
-            }
-
             // Agrupa os subitens por nome de item
             $registos = ucfirst($row2["item_name"]); // Ex: "Medidas", "Autismo"
-            $subitems_by_registo[$registos][] = $row2["name"] . " (" . $row2["value"] . ")";
+            $subitems_by_registo[$registos][$row2["date"] . " (" . $row2["producer"] . ")"][] = $row2["name"] . " (" . $row2["value"] . ")";
         }
 
-        // Formata os subitens agrupados por categoria e adiciona a data e o produtor ao início
+// Formata os subitens agrupados por categoria
         $formatted_subitems = [];
-        foreach ($subitems_by_registo as $registos => $subitems) {
-            // Adiciona a categoria, data e produtor, seguidos pelos subitens formatados.
-            $formatted_subitems[] = "$registos $last_date ($last_producer): " . implode(", ", $subitems);
+        $last_registo = null;
+        foreach ($subitems_by_registo as $registos => $dates) {
+            foreach ($dates as $date => $subitems) {
+                // Adiciona a categoria, seguida pelos subitens formatados.
+                if ($last_registo !== $registos) {
+                    $formatted_subitems[] =" $registos:<br> <a href='".$edit_page."?id=".$row["id"]."'>Editar</a> | <a href='".$edit_page."?id=".$row["id"]."'>Apagar</a> $date - " . implode(", ", $subitems);
+                    $last_registo = $registos;
+                } else {
+                    $formatted_subitems[] = "<a href='".$edit_page."?id=".$row["id"]."'>Editar</a> | <a href='".$edit_page."?id=".$row["id"]."'>Apagar</a> $date - " . implode(", ", $subitems);
+                }
+            }
         }
-
         echo "<td><a href='edit_page.php?id=" . $row["id"] . "'>Editar</a> | <a href='delete_page.php?id=" . $row["id"] . "'>Apagar</a></td>"; // Coluna de Ação
         echo "<td>" . implode("<br>", $formatted_subitems) . "</td>"; // Coluna de Registos
 
@@ -114,7 +101,7 @@ echo <<<HTML
         <label for="tutor_phone">Telefone do Encarregado:</label><br>
         <input type="text" id="tutor_phone" name="tutor_phone" ><br>
         <label for="tutor_email">Email do Encarregado:</label><br>
-        <input type="email" id="tutor_email" name="tutor_email" ><br><br>
+        <input type="text" id="tutor_email" name="tutor_email" ><br><br>
         <input type="submit" value="Submeter">
     </form>
 HTML;
