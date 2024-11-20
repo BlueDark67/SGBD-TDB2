@@ -19,4 +19,11 @@ function connectDB(){
 function closeDB($conn){
     mysqli_close($conn);
 }
+
+function goBackLink() {
+    echo "<script type='text/javascript'>document.write(\"<a href='javascript:history.back()' class='backLink' title='Voltar atr&aacute;s'>Voltar atr&aacute;s</a>\");</script>
+    <noscript>
+    <a href='" . (isset($_SERVER['HTTP_REFERER']) ? htmlspecialchars($_SERVER['HTTP_REFERER'], ENT_QUOTES, 'UTF-8') : '#') . "' class='backLink' title='Voltar atr&aacute;s'>Voltar atr&aacute;s</a>
+    </noscript>";
+}
 ?>

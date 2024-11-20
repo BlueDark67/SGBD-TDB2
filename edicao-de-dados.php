@@ -2,15 +2,9 @@
 // Verificar se o parâmetro 'id' está presente na query string
 if (isset($_GET['id'])) {
     $id = $_GET['id'];
-
-    // Redirecionar via JavaScript
-    echo "<script type='text/javascript'>
-            window.location.href = '" . strtok($_SERVER["REQUEST_URI"], '?') . "';
-          </script>";
-    exit;
-
+    echo "O ID é: " . $id;
 } else {
-    echo "Nenhum ID foi enviado.";
+    echo "Nenhum ID foi detectado.";
 }
 
 echo "<br>";

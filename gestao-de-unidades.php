@@ -2,107 +2,90 @@
 require_once 'common.php';
 global $current_page;
 global $edit_page;
-
 // Conectar à base de dados
 $conn = connectDB();
-
-// Adicionar dados
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $name = mysqli_real_escape_string($conn, $_POST['name']); // Proteção contra SQL Injection
-    if (!empty($name)) { // Verifica se o campo 'name' não está vazio antes de inserir
-        $sql = "INSERT INTO subitem_unit_type (name) VALUE ('$name')";
-        if (!mysqli_query($conn, $sql)) {
-            echo "Erro: " . $sql . "<br>" . mysqli_error($conn);
-        } else {
-            // Utiliza JavaScript para recarregar a página após inserção
-            echo "<script type='text/javascript'>
-                    window.location.href = window.location.href;
-                  </script>";
+if(is_user_logged_in()) {
+    // Verifica se o formulário foi submetido
+    if(isset($_REQUEST['submeter'])) {
+        $unidade = $_POST['unidade'];
+        if($unidade != null) {
+            $sql = "INSERT INTO subitem_unit_type (name) VALUES ('" . $unidade . "')";
+            if (mysqli_query($conn, $sql)) {
+                echo '<h3>Gestão de Unidades - Introdução</h3>';
+                echo '<p>Inseriu a unidade: ' . $unidade . '</p>';
+                echo '<p>Inseriu os dados de um novo tipo de  unidade com sucesso! Cliquem em continuar para avançar</p>';
+                echo '<form action = ' . $current_page . '?estado= method="post">';
+                echo '<input type="hidden" name="estado" value="">';
+                echo '<input type=submit name="continuar" value="continuar">';
+                echo '<br>';
+                goBackLink();
+                echo '</form>';
+            } else {
+                // Exibe erro caso a inserção falhe.
+                echo "Erro: " . $sql . "<br>" . mysqli_error($conn);
+            }
+        }else{
+            goBackLink();
+            echo "<br>";
+            die("Erro: O nome da unidade não pode ser nulo");
         }
-    } else {
-        echo "<script>alert('Por favor, insira um nome!');</script>"; // Exibe um alerta se o campo estiver vazio
+    }else {
+
+            // Consulta para selecionar os dados e construir a tabela
+            $query = "SELECT subitem_unit_type.id, subitem_unit_type.name FROM subitem_unit_type";
+            $result = mysqli_query($conn, $query);
+
+            if (mysqli_num_rows($result) > 0) {
+                echo "<table class='cabecalhoTabela'>
+            <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Subitems</th>
+                <th>Ação</th>
+            </tr>";
+                while ($row = mysqli_fetch_assoc($result)) {
+                    echo "<tr>
+                <td>" . $row["id"] . "</td>
+                <td>" . $row["name"] . "</td>";
+
+                    $query2 = "SELECT subitem.id, subitem.name FROM subitem WHERE subitem.unit_type_id = " . $row["id"];
+                    $result2 = mysqli_query($conn, $query2);
+                    $subitems = [];
+                    while ($row2 = mysqli_fetch_assoc($result2)) {
+                        $query3 = "SELECT item.id, item.name FROM item WHERE item.id = (SELECT item_id FROM subitem WHERE subitem.id = " . $row2["id"] . ")";
+                        $result3 = mysqli_query($conn, $query3);
+                        $subsubitems = [];
+                        while ($row3 = mysqli_fetch_assoc($result3)) {
+                            $subsubitems[] = $row3["name"];
+                        }
+                        $subitems[] = $row2["name"] . " (" . implode(", ", $subsubitems) . ")";
+                    }
+                    echo "<td>" . implode(", ", $subitems) . "</td>";
+                    echo "<td><a href='" . $edit_page . "?id=" . $row["id"] . "'>Editar</a> | <a href='" . $edit_page . "?id=" . $row["id"] . "'>Apagar</a></td>";
+                    echo "</tr>";
+                }
+                echo "</table>";
+            } else {
+                echo "0 resultados";
+            }
+
+            echo '<h3>Gestão de unidades - Introdução</h3>';
+            echo '<span class="vermelho">*Obrigatório</span>';
+            echo '<form action = ' . $current_page . '?estado= method="post">';
+            echo '<label for="unidades">Name: </label><span class="vermelho">*</span>';
+            echo '<input type="text" id="unidade" name="unidade" placeholder="Nome">';
+            echo '<br>';
+            echo '<br>';
+            echo '<input type="hidden" name="estado" value="">';
+            echo '<input type=submit name="submeter" value="submeter">';
+            echo '</form>';
+
+
+            // Fechar a conexão
+            closeDB($conn);
     }
+}else{
+    echo '<h3>Erro</h3>';
+    echo '<p>Deve estar loggado para aceder a esta página</p>';
 }
-
-// Consulta para selecionar as colunas 'id' e 'name' da tabela 'subitem_unit_type'.
-$query = "SELECT subitem_unit_type.id, subitem_unit_type.name FROM subitem_unit_type";
-$result = mysqli_query($conn, $query);
-
-// Verifica se há resultados e apresenta os dados na tabela HTML.
-if (mysqli_num_rows($result) > 0) {
-    // Adiciona o cabeçalho da tabela HTML com as colunas: ID, Nome, Subitems, e Ação.
-    echo "<table>
-    <tr>
-        <style>
-            table, th, td {
-                border: 1px solid black;
-            }
-
-            th, td {
-                padding: 15px;
-                text-align: left;
-
-            }
-
-            th{
-                background-color: #f2f2f2;
-            }
-
-        </style>
-        <th>ID</th>
-        <th>Nome</th>
-        <th>Subitems</th>
-        <th>Ação</th>
-    </tr>";
-
-    // Itera por cada linha do resultado da consulta principal e adiciona os valores à tabela.
-    while($row = mysqli_fetch_assoc($result)) {
-        echo "<tr>
-        <td>" . $row["id"]. "</td>
-        <td>" . $row["name"]. "</td>";
-        // Consulta para selecionar os subitems relacionados ao 'unit_type_id' correspondente da linha atual.
-        $query2 = "SELECT subitem.id, subitem.name FROM subitem WHERE subitem.unit_type_id = ".$row["id"];
-        $result2 = mysqli_query($conn, $query2);
-        $subitems = [];
-        while($row2 = mysqli_fetch_assoc($result2)) {
-            // Consulta para buscar os itens associados ao 'item_id' de cada subitem.
-            $query3 = "SELECT item.id, item.name FROM item WHERE item.id = (SELECT item_id FROM subitem WHERE subitem.id = ".$row2["id"].")";
-            $result3 = mysqli_query($conn, $query3);
-            $subsubitems = [];
-            while($row3 = mysqli_fetch_assoc($result3)) {
-                // Adiciona o nome de cada subsubitem (item) à lista de subsubitems.
-                $subsubitems[] = $row3["name"];
-            }
-            // Adiciona o nome do subitem e seus subsubitems formatados à lista de subitems.
-            $subitems[] = $row2["name"]." (".implode(", ", $subsubitems).")";
-
-        }
-        // Adiciona a lista de subitems formatados como texto à célula correspondente da linha da tabela.
-        echo "<td>".implode(", ", $subitems)."</td>";
-        // Adiciona os links para editar e apagar o registo.
-        echo "<td><a href='".$edit_page."?id=".$row["id"]."'>Editar</a> | <a href='".$edit_page."?id=".$row["id"]."'>Apagar</a></td>";
-        echo "</tr>";
-    }
-    echo "</table>";
-} else {
-    echo "0 resultados";
-}
-
-echo <<<HTML
-    <h3>Gestão de Unidaddes - introdução</h3>
-    <form action="" method="post">
-        <div>
-            <label for="name">Nome:</label><br>
-            <input type="text" id="name" name="name" placeholder="Escreva aqui"><br>
-        </div>
-        <br>
-        <div>
-            <button type="submit">Submeter</button>
-        </div>
-        
-    </form>
-HTML;
-
-// Fechar a conexão
-closeDB($conn);
 ?>
