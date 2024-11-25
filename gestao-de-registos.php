@@ -3,6 +3,7 @@ require_once 'common.php';
 global $current_page;
 global $edit_page;
 
+echo '<link rel="cabecalhoTabela" type="text/css" "" href="custom/css/ag.css">';
 // Conectar à base de dados.
 $conn = connectDB();
 if (is_user_logged_in()) {
@@ -83,12 +84,12 @@ if (is_user_logged_in()) {
             echo "Erro: " . $sql . "<br>" . mysqli_error($conn);
         }
     }else {
-    // Definindo a query SQL para selecionar os dados da tabela 'child'.
+        // Definindo a query SQL para selecionar os dados da tabela 'child'.
         $query = "SELECT child.id ,child.name, child.birth_date, child.tutor_name, child.tutor_phone, child.tutor_email FROM child ORDER BY child.name ASC";
-    // Executa a consulta na base de dados.
+        // Executa a consulta na base de dados.
         $result = mysqli_query($conn, $query);
 
-    // Verifica se a consulta retornou algum resultado.
+        // Verifica se a consulta retornou algum resultado.
         if (mysqli_num_rows($result) > 0) {
             // Se houver resultados, começa a criar a tabela HTML.
             echo "<table class='cabecalhoTabela'>
@@ -104,58 +105,61 @@ if (is_user_logged_in()) {
 
             // Itera sobre cada linha de resultado da consulta principal.
             while ($row = mysqli_fetch_assoc($result)) {
-                // Exibe os dados na tabela HTML para cada criança (child).
                 echo "<tr>
-            <td>" . $row["name"] . "</td>
-            <td>" . $row["birth_date"] . "</td>
-            <td>" . $row["tutor_name"] . "</td>
-            <td>" . $row["tutor_phone"] . "</td>
-            <td>" . $row["tutor_email"] . "</td>";
+        <td>" . $row["name"] . "</td>
+        <td>" . $row["birth_date"] . "</td>
+        <td>" . $row["tutor_name"] . "</td>
+        <td>" . $row["tutor_phone"] . "</td>
+        <td>" . $row["tutor_email"] . "</td>";
 
-                // A segunda consulta SQL seleciona dados adicionais relacionados à criança atual.
-                // A consulta seleciona informações de subitens, itens, valores e produtores, usando JOINs entre as tabelas 'subitem', 'value' e 'item'.
-                // 'item.name AS item_name' renomeia o campo 'item.name' para 'item_name'.
-                $query2 = "SELECT subitem.id, subitem.name, item.name AS item_name, value.value, value.date, value.producer
-                       FROM subitem
-                       JOIN value ON value.subitem_id = subitem.id
-                       JOIN item ON item.id = subitem.item_id
-                       WHERE value.child_id = " . $row["id"] . "
-                       ORDER BY item_name, value.date ASC";
-                // Executa a segunda consulta para pegar os dados relacionados aos subitens e valores.
+                // Inicializar array para itens/subitens
+                $itens = [];
+                $query2 = "SELECT value.subitem_id, value.value, value.date, value.producer 
+               FROM value 
+               WHERE value.child_id =".$row['id']." 
+               ORDER BY value.date ASC";
+
                 $result2 = mysqli_query($conn, $query2);
-
-                $subitems_by_registo = []; // Inicializa o array para armazenar os subitens agrupados por item.
-                $data = []; // Inicializa o array para armazenar as datas.
-                $produtor = []; // Inicializa o array para armazenar os produtores.
-
-                // Itera pelos resultados da segunda consulta para agrupar os dados.
                 while ($row2 = mysqli_fetch_assoc($result2)) {
-                    // Agrupa os subitens pelo nome do item.
-                    $registos = ucfirst($row2["item_name"]); // Ex: "Medidas", "Autismo"
-                    // Organiza os subitens por data e produtor.
-                    $subitems_by_registo[$registos][$row2["date"] . " (" . $row2["producer"] . ")"][] = $row2["name"] . " (" . $row2["value"] . ")";
-                }
+                    $query3 = "SELECT subitem.id, subitem.item_id, subitem.name 
+                   FROM subitem 
+                   WHERE subitem.id = ".$row2['subitem_id']." 
+                   ORDER BY subitem.name ASC";
 
-                // Formatação final dos subitens agrupados.
-                $formatted_subitems = [];
-                $last_registo = null;
-                foreach ($subitems_by_registo as $registos => $dates) {
-                    foreach ($dates as $date => $subitems) {
-                        // Se o registo atual for diferente do anterior, adiciona o registo.
-                        if ($last_registo !== $registos) {
-                            // Adiciona o registo e os subitens. O registo é exibido apenas uma vez. Os subitens são exibidos em cada linha. O implode junta os subitens em uma string.
-                            $formatted_subitems[] = " $registos:<br> <a href='" . $edit_page . "?id=" . $row["id"] . "'>Editar</a> | <a href='" . $edit_page . "?id=" . $row["id"] . "'>Apagar</a> $date - " . implode(", ", $subitems);
-                            $last_registo = $registos;
-                        } else {
-                            // Caso contrário, só adiciona os subitens. O registo não é exibido novamente. Os subitens são exibidos em cada linha. O implode junta os subitens em uma string.
-                            $formatted_subitems[] = "<a href='" . $edit_page . "?id=" . $row["id"] . "'>Editar</a> | <a href='" . $edit_page . "?id=" . $row["id"] . "'>Apagar</a> $date - " . implode(", ", $subitems);
+                    $result3 = mysqli_query($conn, $query3);
+                    while ($row3 = mysqli_fetch_assoc($result3)) {
+                        $query4 = "SELECT item.id, item.name 
+                        FROM item 
+                        WHERE item.id = ".$row3['item_id']." 
+                        ORDER BY item.name ASC";
+
+                        $result4 = mysqli_query($conn, $query4);
+                        while ($row4 = mysqli_fetch_assoc($result4)) {
+                            $itemName = ucfirst($row4['name']);
+                            $datas = $row2['date'] . "(" . $row2['producer'] . ")";
+                            $subitemName = "<strong>". $row3['name'] ."</strong>". " (" . $row2['value'] . ")";
+
+                            // Agrupar subitens por item
+                            if (!isset($itens[$itemName][$datas])) {
+                                $itens[$itemName][$datas] = [];
+                            }
+                            $itens[$itemName][$datas][] = $subitemName;
                         }
                     }
                 }
-                // Exibe os links de ação (editar, apagar) e os dados de registos formatados.
-                echo "<td><a href='" . $edit_page . "?id=" . $row["id"] . "'>Editar</a> | <a href='" . $edit_page . "?id=" . $row["id"] . "'>Apagar</a></td>"; // Coluna de Ação
-                echo "<td>" . implode("<br>", $formatted_subitems) . "</td>"; // Coluna de Registos
-
+                echo "<td><a href='" . $edit_page . "?id=" . $row["id"] . "'>Editar</a> |  <a href='" . $edit_page . "?id=" . $row["id"] . "'>Apagar</a></td>";
+                // Criar célula única para todos os itens/subitens
+                echo "<td>";
+                ksort($itens);
+                foreach ($itens as $item => $dataGroup) {
+                    echo "<strong>" . $item . ":</strong><br>";
+                    foreach ($dataGroup as $data => $subitens) {
+                        echo "<a href='" . $edit_page . "?id=" . $row["id"] . "'>Editar</a> | ";
+                        echo "<a href='" . $edit_page . "?id=" . $row["id"] . "'>Apagar</a> ";
+                        echo $data . " - " . implode(", ", $subitens) . "<br>";
+                    }
+                }
+                echo "</td>";
                 echo "</tr>";
             }
             echo "</table>";
@@ -164,7 +168,7 @@ if (is_user_logged_in()) {
             echo "0 resultados";
         }
 
-    // Exibe o formulário HTML para introdução de novos dados.
+        // Exibe o formulário HTML para introdução de novos dados.
         echo '<h3>Dados de registo - introdução</h3>';
         echo '<form action = ' . $current_page . '?estado= method="post">';
         echo '<label for="name">Nome Completo: </label>';
