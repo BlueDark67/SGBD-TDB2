@@ -3,7 +3,7 @@
 global $current_page;
 global $edit_page;
 $current_page = get_site_url().'/'.basename(get_permalink());
-$edit_page = get_permalink(get_page_by_path('edicao-de-dados'));
+$edit_page = "http://localhost/sgbd/edicao-de-dados/";
 
 function connectDB(){
     //Criar conexão
