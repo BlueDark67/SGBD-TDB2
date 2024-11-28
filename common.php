@@ -1,5 +1,10 @@
 <?php
 
+global $current_page;
+global $edit_page;
+$current_page = get_site_url().'/'.basename(get_permalink());
+$edit_page = "http://localhost/sgbd/edicao-de-dados/";
+
 function connectDB(){
     $servername = "localhost";
     $username = "root";
