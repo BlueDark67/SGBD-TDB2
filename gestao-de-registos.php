@@ -78,69 +78,6 @@ if (is_user_logged_in()) {
                 echo '</ul>';
                 goBackLink();
             }
-        // Se o formulário foi submetido, insere os dados na base de dados.
-    }elseif(isset($_REQUEST['submeter2'])){
-        // Recebe os dados do formulário.
-        $name = $_POST['childName'];
-        $birth_date = $_POST['birth_date'];
-        $tutor_name = $_POST['tutor_name'];
-        $tutor_phone = $_POST['tutor_phone'];
-        $tutor_email = $_POST['tutor_email'];
-        // Insere os dados na base de dados.
-        $sql = "INSERT INTO child (name, birth_date, tutor_name, tutor_phone, tutor_email) VALUES ('" . $name . "', '" . $birth_date . "', '" . $tutor_name . "', '" . $tutor_phone . "', '" . $tutor_email . "')";
-        // Verifica se a inserção foi bem sucedida.
-        if (mysqli_query($conn, $sql)) {
-            echo '<h3>Dados de registo - inserção</h3>';
-            echo '<h4>Inserio os dados:</h4>';
-            echo '<li>Nome da criança: ' . $name . '</li>';
-            echo '<li>Data de nascimento: ' . $birth_date . '</li>';
-            echo '<li>Nome do Enc. de Educação: ' . $tutor_name . '</li>';
-            echo '<li>Telefone do Enc. de Educação: ' . $tutor_phone . '</li>';
-            echo '<li>Email do Enc. de Educação: ' . $tutor_email . '</li>';
-            echo '<h4>Inserio os dados de registo com sucesso!</h4>';
-            echo '<p><strong>Clique em continuar para avançar</p>';
-            echo '<form action = ' . $current_page . '?estado= method="post">';
-            echo '<input type="hidden" name="estado" value="">';
-            echo '<input type=submit name="continuar" value="continuar">';
-            echo '</form>';
-        } else {
-            // Exibe erro caso a inserção falhe.
-            echo "Erro: " . $sql . "<br>" . mysqli_error($conn);
-        }
-    }else {
-        // Definindo a query SQL para selecionar os dados da tabela 'child'.
-        $query = "SELECT child.id ,child.name, child.birth_date, child.tutor_name, child.tutor_phone, child.tutor_email FROM child ORDER BY child.name ASC";
-        // Executa a consulta na base de dados.
-        $result = mysqli_query($conn, $query);
-
-        // Verifica se a consulta retornou algum resultado.
-        if (mysqli_num_rows($result) > 0) {
-            // Se houver resultados, começa a criar a tabela HTML.
-            echo "<table class='cabecalhoTabela'>
-        <tr>
-            <th>Nome</th>
-            <th>Data de Nascimento</th>
-            <th>Tutor</th>
-            <th>Telefone</th>
-            <th>Email</th>
-            <th>Ação</th>
-            <th>Registos</th>
-        </tr>";
-
-            // Itera sobre cada linha de resultado da consulta principal.
-            while ($row = mysqli_fetch_assoc($result)) {
-                // Exibe os dados na tabela HTML para cada criança (child).
-                echo "<tr>
-            <td>" . $row["name"] . "</td>
-            <td>" . $row["birth_date"] . "</td>
-            <td>" . $row["tutor_name"] . "</td>
-            <td>" . $row["tutor_phone"] . "</td>
-            <td>" . $row["tutor_email"] . "</td>";
-
-                // A segunda consulta SQL seleciona dados adicionais relacionados à criança atual.
-                // A consulta seleciona informações de subitens, itens, valores e produtores, usando JOINs entre as tabelas 'subitem', 'value' e 'item'.
-                // 'item.name AS item_name' renomeia o campo 'item.name' para 'item_name'.
-                $query2 = "SELECT subitem.id, subitem.name, item.name AS item_name, value.value, value.date, value.producer
             // Se o formulário foi submetido, insere os dados na base de dados.
         }elseif(isset($_REQUEST['submeter2'])){
             // Recebe os dados do formulário.
@@ -288,23 +225,7 @@ if (is_user_logged_in()) {
                 // Se não houver resultados, exibe uma mensagem.
                 echo "0 resultados";
             }
-        // Exibe o formulário HTML para introdução de novos dados.
-        echo '<h3>Dados de registo - introdução</h3>';
-        echo '<form action = ' . $current_page . '?estado= method="post">';
-        echo '<label for="name">Nome Completo: </label>';
-        echo '<input type= "text" id="childName" name="childName" placeholder="Nome da criança"><br>';
-        echo '<label for="birth_date">Data de Nascimento (AAAA-MM-DD): </label>';
-        echo '<input type= "date" id="birth_date" name="birth_date"><br>';
-        echo '<label for="tutor_name">Nome completo do Encarregado de Educação: </label>';
-        echo '<input type= "text" id="tutor_name" name="tutor_name" placeholder="Nome do tutor"><br>';
-        echo '<label for="tutor_phone">Telefone do Encarregado de Educação (9 digitos): </label>';
-        echo '<input type= "text" id="tutor_phone" name="tutor_phone" placeholder="987654321"><br>';
-        echo '<label for="tutor_email">Email do Encarregado de Educação: </label>';
-        echo '<input type= "text" id="tutor_email" name="tutor_email" placeholder="Exemplo@exemplo.com"><br><br>';
-        echo '<input type="hidden" name="estado" value="">';
-        echo '<input type=submit name="submeter1" value="submeter">';
-        echo '</form>';
-    }
+
             // Exibe o formulário HTML para introdução de novos dados.
             echo '<h3>Dados de registo - introdução</h3>';
             echo '<span class="vermelho">*Obrigatório</span>';
