@@ -83,12 +83,12 @@ if (is_user_logged_in()) {
             echo "Erro: " . $sql . "<br>" . mysqli_error($conn);
         }
     }else {
-    // Definindo a query SQL para selecionar os dados da tabela 'child'.
+        // Definindo a query SQL para selecionar os dados da tabela 'child'.
         $query = "SELECT child.id ,child.name, child.birth_date, child.tutor_name, child.tutor_phone, child.tutor_email FROM child ORDER BY child.name ASC";
-    // Executa a consulta na base de dados.
+        // Executa a consulta na base de dados.
         $result = mysqli_query($conn, $query);
 
-    // Verifica se a consulta retornou algum resultado.
+        // Verifica se a consulta retornou algum resultado.
         if (mysqli_num_rows($result) > 0) {
             // Se houver resultados, começa a criar a tabela HTML.
             echo "<table class='cabecalhoTabela'>
@@ -164,7 +164,7 @@ if (is_user_logged_in()) {
             echo "0 resultados";
         }
 
-    // Exibe o formulário HTML para introdução de novos dados.
+        // Exibe o formulário HTML para introdução de novos dados.
         echo '<h3>Dados de registo - introdução</h3>';
         echo '<form action = ' . $current_page . '?estado= method="post">';
         echo '<label for="name">Nome Completo: </label>';
