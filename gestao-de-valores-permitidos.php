@@ -2,25 +2,44 @@
 require_once 'common.php';
 $conn = connectDB();
 
+global $current_page;
+$current_page = get_site_url() . '/' . basename(get_permalink());
+
 // Verifica se a sessão já foi iniciada
 if (session_status() == PHP_SESSION_NONE) {
-    session_start();  // Inicia a sessão
+    session_start();
 }
 
-// Verifica o estado de execução
 $estado = isset($_REQUEST['estado']) ? $_REQUEST['estado'] : '';
 
 // Se o estado for 'introducao', guarda o subitem_id na sessão e exibe o formulário
 if ($estado === 'introducao' && isset($_REQUEST['subitem'])) {
     $_SESSION['subitem_id'] = $_REQUEST['subitem'];
     echo "<h3>Gestão de valores permitidos - introdução</h3>";
-    echo '<form method="POST" action="gestao-de-valores-permitidos.php">';
+    echo '<form method="POST" action="'.$current_page.'">';
     echo 'Valor: <input type="text" name="valor" required><br>';
     echo '<input type="hidden" name="estado" value="inserir">';
     echo '<input type="submit" value="Inserir valor permitido">';
     echo '</form>';
     echo '<br>';
     goBackLink();
+} elseif ($estado === 'inserir' && isset($_POST['valor'])) {
+    // Obtém o subitem_id da sessão e o valor do formulário
+    $subitem_id = $_SESSION['subitem_id'];
+    $valor = mysqli_real_escape_string($conn, $_POST['valor']);
+    $state = 'active';
+
+    // Subtítulo do estado
+    echo "<h3>Gestão de valores permitidos - inserção</h3>";
+
+    $sql_insert = "INSERT INTO subitem_allowed_value (subitem_id, value, state) VALUES ('$subitem_id', '$valor', '$state')";
+
+    if (mysqli_query($conn, $sql_insert)) {
+        echo "<p>Inseriu os dados de novo valor permitido com sucesso.</p>";
+        echo "<a href='$current_page'>Continuar</a>";
+    } else {
+        echo "<p>Erro ao inserir os dados: " . mysqli_error($conn) . "</p>";
+    }
 } else {
     // Consulta para verificar se há subitens do tipo 'enum'
     $sql_check_enum_subitems = "SELECT COUNT(*) AS enum_subitem_count
@@ -32,7 +51,6 @@ if ($estado === 'introducao' && isset($_REQUEST['subitem'])) {
     if ($row_check_enum_subitems['enum_subitem_count'] == 0) {
         echo "Não há subitems especificados cujo tipo de valor seja enum. Especificar primeiro novo(s) item(s) e depois voltar a esta opção.";
     } else {
-        // Inicializa a tabela e o cabeçalho
         echo '<table>
         <thead>
         <tr>
@@ -47,7 +65,7 @@ if ($estado === 'introducao' && isset($_REQUEST['subitem'])) {
         </thead>
         <tbody>';
 
-        // Primeira query para calcular os valores permitidos
+        //query para calcular os valores permitidos
         $sql_allowed_values = "
             SELECT
                 subitem.item_id,
@@ -64,7 +82,7 @@ if ($estado === 'introducao' && isset($_REQUEST['subitem'])) {
             $allowed_values[$row['item_id']] = $row['total_enum_allowed_values'];
         }
 
-        // Segunda query para calcular os valores não permitidos
+        //Query para calcular os valores não permitidos
         $sql_disallowed_values = "
             SELECT
                 subitem.item_id,
@@ -75,7 +93,6 @@ if ($estado === 'introducao' && isset($_REQUEST['subitem'])) {
               AND subitem_allowed_value.id IS NULL
             GROUP BY subitem.item_id";
         $result_disallowed_values = mysqli_query($conn, $sql_disallowed_values);
-
         // Armazena os valores não permitidos em um array associativo
         $disallowed_values = [];
         while ($row = mysqli_fetch_assoc($result_disallowed_values)) {
@@ -133,23 +150,23 @@ if ($estado === 'introducao' && isset($_REQUEST['subitem'])) {
                             $first_row_item = false;
                         }
 
-                        // Adiciona o subitem e nome apenas na primeira linha do subitem
+                        // Adiciona o ID e o nome do subitem apenas na primeira linha do subitem
                         if ($first_row_subitem) {
-                            // Mudança: Transformar o subitem em um link
-                            $subitem_link = "<a href='?estado=introducao&subitem={$subitem_id}'>{$subitem_name}</a>";
+                            //Transformar o subitem em um link
+                            $subitem_link = "<a href='{$current_page}?estado=introducao&subitem={$subitem_id}'>{$subitem_name}</a>";
                             echo "<td rowspan='{$num_allowed_values_subitems}'>{$subitem_id}</td>";
                             echo "<td rowspan='{$num_allowed_values_subitems}'>{$subitem_link}</td>";
                             $first_row_subitem = false;
                         }
 
-                        // Sempre adiciona os valores permitidos e seus estados
+                        //Adiciona os IDs, valores permitidos e seus estados do subitem
                         echo "<td>{$row_allowed_value['allowed_id']}</td>
                               <td>{$row_allowed_value['allowed_value']}</td>
                               <td>{$row_allowed_value['allowed_state']}</td>
                               <td>
-                                  <a href='editar.php?id={$row_allowed_value['allowed_id']}'>Editar</a> |
-                                  <a href='apagar.php?id={$row_allowed_value['allowed_id']}'>Apagar</a> |
-                                  <a href='desativar.php?id={$row_allowed_value['allowed_id']}'>Desativar</a>
+                                  <a href='{$current_page}?estado=editar&id={$row_allowed_value['allowed_id']}'>Editar</a> |
+                                  <a href='{$current_page}?estado=apagar&id={$row_allowed_value['allowed_id']}'>Apagar</a> |
+                                  <a href='{$current_page}?estado=desativar&id={$row_allowed_value['allowed_id']}'>Desativar</a>
                               </td>
                               </tr>";
                     }
@@ -161,8 +178,8 @@ if ($estado === 'introducao' && isset($_REQUEST['subitem'])) {
                         $first_row_item = false;
                     }
                     if ($first_row_subitem) {
-                        // Mudança: Transformar o subitem em um link
-                        $subitem_link = "<a href='?estado=introducao&subitem={$subitem_id}'>{$subitem_name}</a>";
+                        //Transformar o subitem em um link
+                        $subitem_link = "<a href='{$current_page}?estado=introducao&subitem={$subitem_id}'>{$subitem_name}</a>";
                         echo "<td>{$subitem_id}</td>";
                         echo "<td>{$subitem_link}</td>";
                         $first_row_subitem = false;
