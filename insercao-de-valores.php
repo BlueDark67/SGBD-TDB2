@@ -1,5 +1,5 @@
 <?php
-
+global $current_page;
 // Verifica se a sessão já foi iniciada
 if (session_status() == PHP_SESSION_NONE) {
     session_start();  // Inicia a sessão
@@ -8,6 +8,7 @@ if (session_status() == PHP_SESSION_NONE) {
 require_once 'common.php';
 $conn = connectDB();
 
+$current_page = get_site_url() . '/' . basename(get_permalink());
 
 // Define o estado inicial como 'procurar_crianca'
 $estado = isset($_REQUEST['estado']) ? $_REQUEST['estado'] : 'procurar_crianca';
@@ -88,16 +89,7 @@ elseif ($estado === 'escolher_item') {
                 // Exibe o nome da categoria
                 echo "<li>" . htmlspecialchars($category_name) . "</li>";
 
-                // Query para obter os itens da categoria //perguntar se é para aparecer todos os itens ou só os itens que a criança tem
-                /*$sql_items = "
-                    SELECT DISTINCT i.id, i.name
-                    FROM item i
-                    JOIN subitem si ON si.item_id = i.id
-                    JOIN value v ON v.subitem_id = si.id
-                    WHERE v.child_id = {$_SESSION['child_id']}
-                      AND i.item_type_id = $category_id
-                      AND i.state = 'active'
-                ";*/
+                // Query para obter os itens da categoria
                 $sql_items = "
                     SELECT DISTINCT i.id, i.name
                     FROM item i
@@ -134,6 +126,7 @@ elseif ($estado === 'escolher_item') {
     // Link para voltar ao estado anterior com o parâmetro 'crianca'
     echo "<a href='?estado=escolher_crianca&crianca=" . $_SESSION['child_id'] . "'>Voltar atrás</a>";
 }
+
 // Estado: Introdução
 elseif ($estado === 'introducao') {
     // Obtém o ID do item a partir do REQUEST e salva na variável de sessão
@@ -160,7 +153,7 @@ elseif ($estado === 'introducao') {
         echo "<h3>Inserção de valores - {$_SESSION['item_name']}</h3>";
 
         // Começa a criação do formulário
-        echo "<form name='$form_name' method='post' action='insercao-de-valores.php?estado=validar&item=$item_id'>";
+        echo "<form name='$form_name' method='post' action='{$current_page}?estado=validar&item=$item_id'>";
 
         // Campo oculto para o estado
         echo "<input type='hidden' name='estado' value='validar'>";
@@ -180,7 +173,6 @@ elseif ($estado === 'introducao') {
         ";
         $result_subitens = mysqli_query($conn, $sql_subitens);
 
-
         if ($result_subitens) {
             while ($subitem = mysqli_fetch_assoc($result_subitens)) {
                 $subitem_name = htmlspecialchars($subitem['subitem_name']);
@@ -189,9 +181,7 @@ elseif ($estado === 'introducao') {
                 $value_type = $subitem['value_type'];
                 $unit_id = $subitem['unit_id'];
 
-
-                echo "<label  for='$field_name'><strong>$subitem_name</strong></label><br>";
-
+                echo "<label for='$field_name'><strong>$subitem_name</strong></label><br>";
 
                 // Renderiza o input de acordo com o tipo de valor e campo
                 switch ($value_type) {
@@ -266,12 +256,9 @@ elseif ($estado === 'introducao') {
                         }
                         break;
 
-
                     default:
                         echo "<p>Tipo de campo desconhecido.</p>";
                 }
-
-
 
                 echo "<br><br>";
             }
@@ -287,6 +274,69 @@ elseif ($estado === 'introducao') {
     }
     goBackLink();
 }
+
+// Estado: Validar
+elseif ($estado === 'validar') {
+    echo "<h3>Inserção de valores - {$_SESSION['item_name']} - validar</h3>";
+
+    $item_id = $_SESSION['item_id'];
+    $form_name = "item_type_{$_SESSION['item_type_id']}_item_$item_id";
+
+    $sql_subitens1 = "SELECT
+                    s.id,
+                    s.name AS subitem_name,
+                    s.value_type AS value_type,
+                    s.form_field_name,
+                    s.form_field_type,
+                    s.unit_type_id AS unit_id,
+                    s.form_field_order
+                    FROM subitem s
+                    WHERE s.item_id = $item_id AND s.state = 'active'
+                    ORDER BY s.form_field_order";
+    $result_subitens1 = mysqli_query($conn, $sql_subitens1);
+
+    $missing_fields = [];
+    $submitted_data = [];
+
+    if ($result_subitens1) {
+        while ($subitem = mysqli_fetch_assoc($result_subitens1)) {
+            $subitem_name = htmlspecialchars($subitem['subitem_name']);
+            $field_name = htmlspecialchars($subitem['form_field_name']);
+            $value = isset($_POST[$field_name]) ? $_POST[$field_name] : '';
+
+            if (empty($value)) {
+                $missing_fields[] = $subitem_name;
+            } else {
+                $submitted_data[$subitem_name] = $value;
+            }
+        }
+    }
+
+    if (!empty($missing_fields)) {
+        echo "<p>Os seguintes campos são obrigatórios e não foram preenchidos:</p>";
+        echo "<ul>";
+        foreach ($missing_fields as $field) {
+            echo "<li>$field</li>";
+        }
+        echo "</ul>";
+        goBackLink();
+    } else {
+        echo "<p>Estamos prestes a inserir os dados abaixo na base de dados. Confirma que os dados estão corretos e pretende submeter os mesmos?</p>";
+        echo "<ul>";
+        foreach ($submitted_data as $key => $value) {
+            echo "<li><strong>$key:</strong> $value</li>";
+        }
+        echo "</ul>";
+
+        echo "<form method='post' action='{$current_page}?estado=inserir&item=$item_id'>";
+        foreach ($submitted_data as $key => $value) {
+            echo "<input type='hidden' name='$key' value='$value'>";
+        }
+        echo "<button type='submit'>Submeter</button>";
+        echo "</form>";
+    }
+}
+
 
 closeDB($conn);
 ?>

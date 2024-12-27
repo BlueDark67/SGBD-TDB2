@@ -35,7 +35,8 @@ if ($estado === 'introducao' && isset($_REQUEST['subitem'])) {
     $sql_insert = "INSERT INTO subitem_allowed_value (subitem_id, value, state) VALUES ('$subitem_id', '$valor', '$state')";
 
     if (mysqli_query($conn, $sql_insert)) {
-        echo "<p>Inseriu os dados de novo valor permitido com sucesso.</p>";
+        echo "<p><strong>Inseriu os dados de novo valor permitido com sucesso.</strong></p>";
+        echo "<p><strong>Clique em Continuar para avançar </strong></p>";
         echo "<a href='$current_page'>Continuar</a>";
     } else {
         echo "<p>Erro ao inserir os dados: " . mysqli_error($conn) . "</p>";
@@ -189,7 +190,6 @@ if ($estado === 'introducao' && isset($_REQUEST['subitem'])) {
                           </tr>";
                 }
             }
-
             // Se o item não tiver subitens, exibe uma linha com a mensagem
             if (!$has_subitems) {
                 echo "<tr>
