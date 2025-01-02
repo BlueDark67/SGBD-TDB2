@@ -185,7 +185,7 @@ if (is_user_logged_in()) {
                             }
                         }
                     }
-                    // Renderiza uma linha da tabela HTML com informações do registro principal
+                    // Exibe os dados da criança
                     echo "<tr>
                     <td>" . $row["name"] . "</td>
                     <td>" . $row["birth_date"] . "</td>
