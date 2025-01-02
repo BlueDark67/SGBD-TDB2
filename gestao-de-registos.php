@@ -1,13 +1,14 @@
 <?php
-require_once "custom/css/ag.css";
+//require_once "custom/css/ag.css";
 require_once 'common.php';
+echo '<script defer src="custom/js/script.js"></script>';
 global $current_page;
 global $edit_page;
 
 // Conectar à base de dados.
 $conn = connectDB();
 if (is_user_logged_in()) {
-    //if(current_user_can('Manage records')) {
+    if(current_user_can('manage_records')) {
         // Verifica se o formulário foi submetido.
         if(isset($_REQUEST['submeter1'])){
             // Recebe os dados do formulário.
@@ -18,7 +19,6 @@ if (is_user_logged_in()) {
             $tutor_email = $_POST['tutor_email'];
 
             $errors = [];
-
             if (empty($name) || !is_string($name)) {
                 $errors[] = "O nome da criança deve ser um texto válido.";
             }
@@ -227,10 +227,11 @@ if (is_user_logged_in()) {
             }
 
             // Exibe o formulário HTML para introdução de novos dados.
+
             echo '<h3>Dados de registo - introdução</h3>';
             echo '<span class="vermelho">*Obrigatório</span>';
-            echo '<form action = ' . $current_page . '?estado= method="post">';
-            echo '<label for="name">Nome Completo: </label><span class="vermelho">*</span>';
+            echo '<form id="form" action =' . $current_page . '?estado= method="post">';
+            echo '<label for="childName">Nome Completo: </label><span class="vermelho">*</span>';
             echo '<input type= "text" id="childName" name="childName" placeholder="Nome da criança"><br>';
             echo '<label for="birth_date">Data de Nascimento (AAAA-MM-DD): </label><span class="vermelho">*</span>';
             echo '<input type= "date" id="birth_date" name="birth_date"><br>';
@@ -241,13 +242,13 @@ if (is_user_logged_in()) {
             echo '<label for="tutor_email">Email do Encarregado de Educação: </label>';
             echo '<input type= "text" id="tutor_email" name="tutor_email" placeholder="Exemplo@exemplo.com"><br><br>';
             echo '<input type="hidden" name="estado" value="">';
-            echo '<input type="submit" class="botao-vermelho-verde" name="submeter1" value="submeter">';
+            echo '<input type="submit" id="botao-vermelho-verde" name="submeter1" value="submeter">';
             echo '</form>';
         }
-    /*}else{
+   }else{
         echo '<h3>Erro</h3>';
         echo '<p>Não tem permissões nesta página</p>';
-    }*/
+    }
 }else{
     echo '<h3>Erro</h3>';
     echo '<p>Deve estar loggado para aceder a esta página</p>';

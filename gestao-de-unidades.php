@@ -1,12 +1,11 @@
 <?php
-require_once "custom/css/ag.css";
 require_once 'common.php';
 global $current_page;
 global $edit_page;
 // Conectar à base de dados
 $conn = connectDB();
 if(is_user_logged_in()) {
-    //if(current_user_can('Manage unit types')) {
+    if(current_user_can('manage_unit_types')) {
         // Verifica se o formulário foi submetido
         if(isset($_REQUEST['submeter'])) {
             $unidade = $_POST['unidade'];
@@ -78,17 +77,17 @@ if(is_user_logged_in()) {
                 echo '<br>';
                 echo '<br>';
                 echo '<input type="hidden" name="estado" value="">';
-                echo '<input type=submit name="submeter" value="submeter">';
+                echo '<input type=submit id="botao-vermelho-verde" name="submeter" value="submeter">';
                 echo '</form>';
 
 
                 // Fechar a conexão
                 closeDB($conn);
         }
-    /*}else{
+    }else{
         echo '<h3>Erro</h3>';
         echo '<p>Não tem permissões para aceder a esta página</p>';
-    }*/
+    }
 }else{
     echo '<h3>Erro</h3>';
     echo '<p>Deve estar loggado para aceder a esta página</p>';
